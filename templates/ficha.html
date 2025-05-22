@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ficha {{ id_estacion }}</title>
+
+  <style>
+    /* Márgenes de página */
+    @page { margin: 1.5cm; }
+    body {
+      font-family: "Arial", sans-serif;
+      color: #333;
+      /* si quieres otra fuente, cámbiala aquí */
+    }
+
+    /* Encabezado con logo y título */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #e0e0e0;      /* gris claro de fondo */
+      padding: 0.5em 1em;             /* espacio interior */
+      border: 1px solid #ccc;         /* línea sutil alrededor */
+      margin-bottom: 1em;
+    }
+
+    /* --- Segunda franja debajo del header --- */
+    .subheader {
+      display: flex;
+      margin-bottom: 1em;
+      font-family: Arial, sans-serif;
+    }
+
+    h2.section-header {
+      background-color: #d9d9d9;   /* gris claro */
+      border: 1px solid #999;      /* borde suave */
+      padding: 0.5em 0.8em;        /* espacio interior */
+      margin: 1.5em 0 0.5em;       /* separaciones arriba/abajo */
+      font-family: Arial, sans-serif;
+      font-size: 1em;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+    }
+
+    .subheader-title {
+      flex: 3;
+      background-color: #00A650;  /* verde oscuro */
+      color: #fff;
+      font-weight: bold;
+      padding: 0.6em 1em;
+      font-size: 1em;
+    }
+    .subheader-station {
+      flex: 1;
+      background-color: #9ADB8C;  /* verde claro */
+      color: #fff;
+      text-align: center;
+      padding: 0.6em 1em;
+      font-size: 1em;
+      font-weight: bold;
+    }
+
+    /* Contenedor con Grid de dos filas */
+    .info-section {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      grid-auto-rows: min-content;
+      gap: 0.5em;
+      margin-bottom: 1em;
+    }
+
+    /* Paneles */
+    /* === BORDE EXTERIOR DEL PANEL === */
+    .panel {
+      border: 1px solid #999;
+    }
+
+    /* === QUITO TODOS LOS BORDES INTERNOS === */
+    .panel-body th,
+    .panel-body td {
+      border: none !important;
+    }
+
+    /* === SI QUIERO LÍNEAS ENTRE FILAS === */
+    .panel-body tr + tr th,
+    .panel-body tr + tr td {
+      border-top: 1px solid #ccc;
+    }
+
+
+    /* Panel body: tabla sin márgenes */
+    .panel-body {
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    /* Panel RINEX ocupa columnas 3–6 */
+    .rinex       { grid-column: 3 / span 4; }
+
+    /* Tabla interna sin bordes de celda */
+    .rinex-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .rinex-table th,
+    .rinex-table td {
+      border: none;
+      padding: 0.4em 0.6em;
+      vertical-align: middle;
+    }
+
+    /* Borde exterior del panel */
+    .panel.rinex {
+      border: 1px solid #999;
+    }
+
+    /* Línea fina entre filas */
+    .rinex-table tr + tr td {
+      border-top: 1px solid #ccc;
+    }
+
+    /* Etiqueta vs valor */
+    .rinex-label {
+      width: 15%;
+      font-weight: bold;
+    }
+    .rinex-value {
+      width: 35%;
+      /* evita que el enlace haga overflow */
+      word-break: break-all;
+    }
+
+    /* Estilo del enlace */
+    .rinex-value a {
+      color: #06c;
+      text-decoration: none;
+    }
+
+    /* Un poco de espacio horizontal entre casillas */
+    .rinex-value label {
+      margin-right: 1em;
+    }
+
+    /* Ubicaciones específicas en el grid */
+    .basics       { grid-column: 1 / span 2; }
+    .owner        { grid-column: 1 / span 2; }
+    .files        { grid-column: 3 / span 4; }
+
+    /* Panel completa el ancho */
+    .panel.coordinates {
+      grid-column: 1 / -1;
+    }
+
+    /* Reutiliza .panel-header para “Coordenadas” */
+
+    /* Tabla interior sin bordes internos */
+    .coords-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .coords-table th,
+    .coords-table td {
+      border: none;
+      padding: 0.5em 0.8em;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    /* Línea fina entre todas las filas */
+    
+    .coords-table tr + tr td {
+      border-top: 1px solid #ccc;
+    }
+
+    /* Grandes bloques */
+    .group-header th {
+      background-color: #e8e8e8;
+      font-weight: bold;
+    }
+
+    /* Subcabeceras internas */
+    .sub-header th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* ===== Equipamiento ===== */
+    .panel.equipamiento th {
+      /* RECEPTOR / ANTENA */
+      background-color: #e8e8e8;
+      font-weight: bold;
+    }
+
+    .equip-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .equip-table th,
+    .equip-table td {
+      border: 1px solid #ccc;
+      padding: 0.5em;
+      vertical-align: middle;
+      text-align: center;
+    }
+    .inner-table th {
+      background-color: #f0f0f0;
+      font-weight: bold;
+    }
+    .inner-table th,
+    .inner-table td {
+      border: none;
+      padding: 0.4em;
+      text-align: center;
+    }
+
+
+    /* Valores alineados a la derecha */
+    .value {
+      text-align: right;
+    }
+
+
+    .panel.basics .panel-body td.centered {
+      text-align: center;         /* centra los valores */
+    }
+
+    .logo-left, .logo-right {
+      height: 60px;                   /* ajusta según necesites */
+      object-fit: contain;
+    }
+    .header-text {
+      flex: 1;                        /* ocupa todo el espacio central */
+      text-align: center;
+      padding: 0 1em;                 /* un poco de respiro lateral */
+    }
+    .header-text p {
+      margin: 0.1em 0;                /* espaciamientos más cerrados */
+    }
+    .header-text .line1 {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    .header-text .line2 {
+      font-style: italic;
+      font-size: 1.1em;
+    }
+    .header-text .line3 {
+      font-size: 1em;
+      color: #555;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- ======== 2) ENCABEZADO: logo y título ======== -->
+  <div class="header">
+    <img class="logo-left"  src="{{ logo_usach }}" alt="USACH">
+    <div class="header-text">
+      <p class="line1">Centro de Procesamiento y Análisis Geodésico USC</p>
+      <p class="line2">Área: Marcos de Referencia</p>
+    </div>
+    <img class="logo-right" src="{{ logo_cpag  }}" alt="CPAC USC">
+  </div>
+
+  <!-- ======== 2.1) SEGUNDA FRANJA: Título + Estación ======== -->
+  <div class="subheader">
+    <div class="subheader-title">
+      FICHA ESTACIÓN DE REFERENCIA DE OPERACIÓN CONTINUA
+    </div>
+    <div class="subheader-station">
+      {{ id_estacion }}
+    </div>
+  </div>
+
+
+  <!-- 2) Título de sección general -->
+  <h2 class="section-header">Información</h2>
+
+  <div class="info-section">
+
+    <!-- Fila 1: tres paneles -->
+    <div class="panel basics">
+      <table class="panel-body">
+        <tr>
+          <th>ID Estación</th>
+          <td colspan="2" class="centered">{{ id_estacion }}</td>
+        </tr>
+        <tr>
+          <th>Número Domo</th>
+          <td colspan="2" class="centered">{{ numero_domo }}</td>
+        </tr>
+        <tr>
+          <th>Puesta en servicio</th>
+          <td colspan="2" class="centered">{{ fecha_servicio }}</td>
+        </tr>
+        <tr>
+          <th>Altura (m) / Referencia</th>
+          <td class="centered">{{ altura }}</td>
+          <td class="centered">{{ referencia }}</td>
+        </tr>
+        <tr>
+          <th>Clasificación</th>
+          <td colspan="2" class="centered">{{ clasificacion }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="panel rinex">
+      <table class="rinex-table">
+        <!-- Fila de valores + checkboxes -->
+        <tr>
+          <!-- RNX2 -->
+          <td class="rinex-label">RNX2</td>
+          <td class="rinex-value">{{ rnx2 or "…" }}</td>
+
+          <!-- Sesión + checkboxes juntas -->
+          <td class="rinex-label">Sesión</td>
+          <td class="rinex-value">
+            <!-- Intervalo -->
+            <label>
+              {% if intervalo_grabacion == "30S" %}☑{% else %}☐{% endif %} 30 S
+            </label>
+            <label>
+              {% if intervalo_grabacion == "15S" %}☑{% else %}☐{% endif %} 15 S
+            </label>
+            <br>
+            <!-- Frecuencia -->
+            <label>
+              {% if sesion|lower == "diario" %}☑{% else %}☐{% endif %} diario
+            </label>
+            <label>
+              {% if sesion|lower == "horario" %}☑{% else %}☐{% endif %} horario
+            </label>
+          </td>
+        </tr>
+
+        <!-- Fila de RNX3 + logfile -->
+        <tr>
+          <td class="rinex-label">RNX3</td>
+          <td class="rinex-value">{{ constelaciones }}</td>
+
+          <td class="rinex-label">Logfile</td>
+          <td class="rinex-value">
+            <a href="{{ logfile }}">{{ logfile }}</a>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  <!-- Panel Propietario/Gestor -->
+  <div class="panel owner">
+    <table class="panel-body">
+      <tr><th>Propietario</th><td>{{ propietario }}</td></tr>
+      <tr><th>Gestor</th>     <td>{{ gestor }}</td></tr>
+      <tr><th>Ciudad</th>     <td>{{ ciudad }}</td></tr>
+      <tr><th>Región</th>     <td>{{ region }}</td></tr>
+      <tr><th>País</th>       <td>{{ pais }}</td></tr>
+    </table>
+  </div>
+  
+
+  <!-- Panel Archivos & Redes -->
+  <div class="panel files">
+    <table class="panel-body">
+      <tr>
+        <th>Archivos Observación RNX3</th>
+        <td><a href="{{ archivos_rnx3 }}">{{ archivos_rnx3 }}</a></td>
+      </tr>
+      <tr>
+        <th>Archivos Observación RNX2</th>
+        <td>{{ archivos_rnx2 or "-" }}</td>
+      </tr>
+      <tr>
+        <th>Archivos Navegación</th>
+        <td>{{ archivos_navegacion or "-" }}</td>
+      </tr>
+
+      <!-- CABECERA REDES COMO 3 COLUMNAS -->
+      <tr>
+        <th>Red Nacional</th>
+        <th>Red Continental</th>
+        <th>Red Global</th>
+      </tr>
+      <tr>
+        <td>{{ red_nacional or "-" }}</td>
+        <td>{{ red_continental }}</td>
+        <td>{{ red_global }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
+  <!-- ======== 3) Sección Equipamiento ======== -->
+  <h2 class="section-header">Equipamiento</h2>
+  <div class="panel equipamiento">
+    <table class="equip-table">
+      <tr>
+        <th>RECEPTOR</th>
+        <th>ANTENA</th>
+      </tr>
+      <tr>
+        <td>
+          <table class="inner-table">
+            <tr>
+              <th>Actual</th>
+              <td>{{ receiver_actual_date }}</td>
+              <td>{{ receiver_actual_type }}</td>
+            </tr>
+            <tr>
+              <th>Anterior</th>
+              <td>{{ receiver_previous_date }}</td>
+              <td>{{ receiver_previous_type }}</td>
+            </tr>
+          </table>
+        </td>
+        <td>
+          <table class="inner-table">
+            <tr>
+              <th>Actual</th>
+              <td>{{ antenna_actual_date }}</td>
+              <td>{{ antenna_actual_type }}</td>
+            </tr>
+            <tr>
+              <th>Anterior</th>
+              <td>{{ antenna_previous_date }}</td>
+              <td>{{ antenna_previous_type }}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </div>  
+
+
+
+
+  <!-- 4) Sección Coordenadas ==================================== -->
+  <h2 class="section-header">Coordenadas</h2>
+  <div class="panel coordinates">
+    <table class="coords-table">
+
+      <colgroup>
+        <col style="width:20%">
+        <col style="width:26.66%">
+        <col style="width:26.66%">
+        <col style="width:26.66%">
+      </colgroup>
+
+      <!-- SISTEMA ocupa toda la fila -->
+      <tr class="group-header">
+        <th>SISTEMA</th>
+        <td class="value" colspan="3">{{ sistema }}</td>
+      </tr>
+
+      <!-- MARCO y ÉPOCA en la siguiente fila -->
+      <tr class="group-header">
+        <th>MARCO</th>
+        <td class="value">{{ marco }}</td>
+        <th>ÉPOCA</th>
+        <td class="value">{{ epoca }}</td>
+      </tr>
+
+      <!-- ECEF unificado en dos filas -->
+      <tr class="sub-header">
+        <th rowspan="2">ECEF (m)</th>
+        <th>X</th>
+        <th>Y</th>
+        <th>Z</th>
+      </tr>
+      <tr>
+        <td class="value">{{ ecef_x }}</td>
+        <td class="value">{{ ecef_y }}</td>
+        <td class="value">{{ ecef_z }}</td>
+      </tr>
+
+      <!-- GEODÉSICAS en dos filas y luego ELIP -->
+      <tr class="sub-header">
+        <th rowspan="2">GEODÉSICAS</th>
+        <th>LAT</th>
+        <th>LONG</th>
+        <th>h</th>
+      </tr>
+      <tr>
+        <td class="value">{{ lat }}</td>
+        <td class="value">{{ lon }}</td>
+        <td class="value">{{ h }}</td>
+      </tr>
+      <!-- ELIPSOIDE -->
+      <tr class="group-header">
+        <th>ELIPSOIDE</th>
+        <td class="value" colspan="3">{{ elipsoide }}</td>
+      </tr>
+
+      <!-- PROYECTADAS -->
+      <tr class="sub-header">
+        <th rowspan="2">PROYECTADAS</th>
+        <th>E</th>
+        <th>N</th>
+        <th></th>
+      </tr>
+      <tr>
+        <td class="value">{{ utm_e }}</td>
+        <td class="value">{{ utm_n }}</td>
+        <td></td>
+      </tr>
+
+      <!-- UTM con su zona en fila aparte -->
+      <tr class="group-header">
+        <th>UTM</th>
+        <td class="value" colspan="3">{{ zona_utm }}</td>
+      </tr>
+
+      <!-- PRECISIONES -->
+      <tr class="sub-header">
+        <th rowspan="2">PRECISIONES</th>
+        <th>e</th>
+        <th>n</th>
+        <th>u</th>
+      </tr>
+      <tr>
+        <td class="value">{{ prec_e }}</td>
+        <td class="value">{{ prec_n }}</td>
+        <td class="value">{{ prec_u }}</td>
+      </tr>
+
+    </table>
+  </div>
+
+
+
+  <!-- ======== 5) PIE DE PÁGINA ======== -->
+  <div class="footer">
+    Generado: {{ ahora }}
+  </div>
+
+</body>
+</html>

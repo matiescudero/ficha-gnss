@@ -1,0 +1,6 @@
+SQLAlchemy>=1.4
+psycopg2-binary
+Jinja2
+pymap3d
+utm
+python-dotenv
