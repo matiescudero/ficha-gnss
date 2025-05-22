@@ -8,6 +8,7 @@ import pymap3d as pm
 import re, utm
 import sys
 import base64
+import subprocess
 
 # — Carga .env —
 load_dotenv()
@@ -315,30 +316,45 @@ def build_context(station: str, fecha: str) -> dict:
 
 
 def main():
+    # 1) Pregunto estación y fecha
     estacion = input("Estación (p.ej. USCL): ").strip().upper()
     fecha    = input("Fecha (YYYY-MM-DD): ").strip()
+    # validación mínima
     try:
         datetime.strptime(fecha, "%Y-%m-%d")
     except ValueError:
         print("❌ Formato de fecha inválido, debe ser YYYY-MM-DD.", file=sys.stderr)
         sys.exit(1)
 
-    # Usamos build_context para traer TODO + logos inline
+    # 2) Construyo el context
     context = build_context(estacion, fecha)
 
-    env = Environment(
-        loader=FileSystemLoader("templates"),
-        auto_reload=True,
-        cache_size=0
-    )
+    # 3) Cargo y render de la plantilla
+    env = Environment(loader=FileSystemLoader("templates"))
     tpl = env.get_template("ficha.html")
     html_out = tpl.render(**context)
 
-    output_path = f"ficha_{estacion}_{fecha}.html"
-    with open(output_path, "w", encoding="utf-8") as f:
+    # 4) Guardo el HTML temporal
+    html_path = f"ficha_{estacion}_{fecha}.html"
+    with open(html_path, "w", encoding="utf-8") as f:
         f.write(html_out)
-    print("Generada →", output_path)
 
+    # 5) Llamada a wkhtmltopdf para generar el PDF
+    pdf_path = f"ficha_{estacion}_{fecha}.pdf"
+    try:
+        subprocess.run([
+            "wkhtmltopdf",
+            "--enable-local-file-access",  # necesario si lees ficheros locales
+            html_path,
+            pdf_path
+        ], check=True)
+        print("✔ PDF generado →", pdf_path)
+    except subprocess.CalledProcessError as e:
+        print("❌ Error generando PDF:", e, file=sys.stderr)
+        sys.exit(1)
+
+    # Limpiar el HTML
+    os.remove(html_path)
 
 if __name__ == "__main__":
     main()
