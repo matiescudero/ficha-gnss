@@ -4,55 +4,58 @@
   <meta charset="UTF-8">
   <title>Ficha {{ id_estacion }}</title>
 
+  <!-- Importar Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+
   <style>
+    /* Variables CSS para colores y tipografía */
+    :root {
+      --font-family: 'Open Sans', sans-serif;
+      --font-size-base: 14px;
+      --color-text: #333333;
+      --color-gray-light: #f5f5f5;
+      --color-gray: #e0e0e0;
+      --color-gray-dark: #cccccc;
+      --color-primary: #007a33;      /* verde USACH */
+      --color-secondary: #9adb8c;    /* verde suave */
+      --fw-normal: 400;
+      --fw-medium: 600;
+      --fw-bold:   700;
+    }
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     /* Márgenes de página */
     @page { margin: 1.5cm; }
-    body {
-      font-family: "Arial", sans-serif;
-      color: #333;
-    }
+
+    /* Encabezado principal */
     .header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      background-color: #e0e0e0;
+      justify-content: space-between;
+      background-color: var(--color-gray-light);
       padding: 0.5em 1em;
-      border: 1px solid #ccc;
+      border-bottom: 2px solid var(--color-gray);
       margin-bottom: 1em;
     }
+
+    .header-text {
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: var(--fw-medium);
+      line-height: 1.2;
+    }
+
     .subheader {
       display: flex;
       margin-bottom: 1em;
-      font-family: Arial, sans-serif;
+      font-family: 'Open Sans', sans-serif;
     }
-    h2.section-header {
-      background-color: #d9d9d9;
-      border: 1px solid #999;
-      padding: 0.5em 0.8em;
-      margin: 1.5em 0 0.5em;
-      font-family: Arial, sans-serif;
-      font-size: 1em;
-      font-weight: bold;
-      color: #333;
-      text-align: center;
-    }
-    .subheader-title {
-      flex: 3;
-      background-color: #00A650;
-      color: #fff;
-      font-weight: bold;
-      padding: 0.6em 1em;
-      font-size: 1em;
-    }
-    .subheader-station {
-      flex: 1;
-      background-color: #9ADB8C;
-      color: #fff;
-      text-align: center;
-      padding: 0.6em 1em;
-      font-size: 1em;
-      font-weight: bold;
-    }
+
     .info-section {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -60,12 +63,95 @@
       margin-bottom: 1em;
     }
 
+    .logo-left, .logo-right {
+      height: 60px;
+      object-fit: contain;
+    }
+
+    .header-text {
+      flex: 1;
+      text-align: center;
+    }
+
+    .header-text p { 
+      margin: 0.2em 0;
+      font-weight: 500;
+    }
+
+    .subheader-title {
+      flex: 3;
+      background-color: var(--color-primary);
+      color: #fff;
+      font-weight: 700;
+      padding: 0.6em 1em;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+    .subheader-station {
+      flex: 1;
+      background-color: var(--color-secondary);
+      color: #fff;
+      font-weight: 700;
+      text-align: center;
+      padding: 0.6em 1em;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    table,
+    table th,
+    table td {
+      font-family: var(--font-family);
+      font-size: 0.9rem;             
+      line-height: 1.3;             
+    }
+
+    table th {
+      background-color: var(--color-gray-light);
+      font-weight: var(--fw-medium);
+      text-align: left;
+      color: var(--color-text);
+    }
+
+    table td {
+      font-weight: var(--fw-normal);
+      color: var(--color-text);
+    }
+    .panel-body td.centered {
+      text-align: center;
+    }
+    .value {
+      text-align: right;
+    }
+
+    .group-header th {
+      background-color: var(--color-gray);
+      font-weight: var(--fw-bold);
+    }
+    .sub-header th {
+      background-color: var(--color-gray-light);
+      font-weight: var(--fw-medium);
+      text-align: center;
+    }
+
+
     /* panel básico, owner y archivos ahora iguales */
     .panel {
       border: 1px solid #999;
     }
 
-    /* estilo opcional para que la cabecera RNX3 luzca igual que tus h2 */
+    /* Títulos de sección */
+    h2.section-header {
+      background-color: var(--color-gray);
+      color: var(--color-text);
+      font-size: 1em;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 700;
+      text-align: center;
+      padding: 0.5em 0;
+      margin: 1.5em 0 0.5em;
+    }
+
     .panel.archivos thead th {
       background-color: #d9d9d9;
       border-bottom: 1px solid #999;
@@ -101,15 +187,7 @@
     .coords-table tr + tr td {
       border-top: 1px solid #ccc;
     }
-    .group-header th {
-      background-color: #e8e8e8;
-      font-weight: bold;
-    }
-    .sub-header th {
-      background-color: #f0f0f0;
-      font-weight: bold;
-      text-align: center;
-    }
+
     .panel.equipamiento th {
       background-color: #e8e8e8;
       font-weight: bold;
@@ -135,22 +213,248 @@
       padding: 0.4em;
       text-align: center;
     }
-    .value {
-      text-align: right;
-    }
+
     .panel.basics .panel-body td.centered {
       text-align: center;
     }
-    .logo-left, .logo-right {
-      height: 60px;
-      object-fit: contain;
+
+    .panel {
+      border: 1px solid var(--color-gray-dark);
+      border-radius: 4px;
+      overflow: hidden;
     }
-    .header-text {
-      flex: 1;
+
+    /* 2. Añadir ‘aire’ con padding interno */
+    .panel .panel-body,
+    .equip-table,
+    .coords-table {
+      padding: 0.5em;
+    }
+
+    /* 3. Zebra-striping en todas las tablas para guiar la vista */
+    .coords-table tr:nth-child(even) td,
+    .equip-table tr:nth-child(even) td,
+    .panel-body tr:nth-child(even) td {
+      background-color: var(--color-gray-light);
+    }
+
+    /* 4. Afinar color de encabezados internos */
+    .panel-body th,
+    .inner-table th {
+      background-color: var(--color-gray);
+      color: var(--color-text);
+      font-weight: var(--fw-medium);
+    }
+
+    /* 5. Quitar bordes internos redundantes */
+    .panel-body th,
+    .panel-body td,
+    .inner-table th,
+    .inner-table td {
+      border: none;
+    }
+
+    /* 6. Mejorar contraste de los títulos de sección */
+    h2.section-header {
+      background-color: var(--color-primary);
+      color: #fff;
+      border-radius: 4px 4px 0 0;
+      margin: 2em 0 0.5em;
+      padding: 0.6em 0;
+    }
+
+    /* 7. Separar visualmente las secciones */
+    main > section {
+      margin-bottom: 1.5em;
+    }
+
+    /* 8. Ajustar la altura de las filas “Actual/Anterior” */
+    .inner-table th {
+      width: 30%;
+      text-align: left;
+    }
+
+    .inner-table td {
+      width: 35%;
       text-align: center;
-      padding: 0 1em;
     }
-    .header-text p { margin: 0.1em 0; }
+
+    /* 9. Afinar subheader (nombre + código) */
+    .subheader-title {
+      border-top-left-radius: 4px;
+      border-bottom-left-radius: 4px;
+    }
+    .subheader-station {
+      border-top-right-radius: 4px;
+      border-bottom-right-radius: 4px;
+    }
+
+    /* 10. Dale un sombreado muy sutil a todo el body */
+    body {
+      background-color: #fafafa;
+    }
+
+    .info-section .panel-body {
+      margin: 0;
+    }
+    .info-section .panel-body th,
+    .info-section .panel-body td {
+      padding: 0.3em 0.6em;
+      white-space: nowrap;
+      text-align: left !important;       /* evita saltos de línea innecesarios */
+    }
+
+    /* Ajusta ancho de columnas automáticas para no dejar huecos */
+    .info-section .panel {
+      display: flex;
+    }
+    .info-section .panel.basics { flex: 1.2; }
+    .info-section .panel.owner  { flex: 0.8; }
+    .info-section .panel.archivos { flex: 1; }
+
+    .panel.equipamiento .inner-table {
+      table-layout: fixed;      /* Hace obedecer los anchos */
+      width: 100%;
+    }
+    .panel.equipamiento .inner-table th,
+    .panel.equipamiento .inner-table td {
+      padding: 0.4em 0.6em;
+      border: none;
+      vertical-align: middle;
+    }
+
+    /*  Columna 1: etiqueta (Actual / Anterior) */
+    .panel.equipamiento .inner-table th:nth-child(1),
+    .panel.equipamiento .inner-table td:nth-child(1) {
+      width: 30%;
+      text-align: left;
+    }
+
+    /*  Columna 2: fecha */
+    .panel.equipamiento .inner-table th:nth-child(2),
+    .panel.equipamiento .inner-table td:nth-child(2) {
+      width: 35%;
+      text-align: center;
+    }
+
+    /*  Columna 3: tipo */
+    .panel.equipamiento .inner-table th:nth-child(3),
+    .panel.equipamiento .inner-table td:nth-child(3) {
+      width: 35%;
+      text-align: right;
+    }
+
+    /* ——— 1. Grid completo con bordes colapsados ——— */
+    .coords-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-family: var(--font-family);
+      font-size: 0.9rem;
+    }
+
+    /* borde en todas las celdas y padding consistente */
+    .coords-table th,
+    .coords-table td {
+      border: 1px solid var(--color-gray-dark);
+      padding: 0.5em;
+      vertical-align: middle;
+    }
+
+    /* ——— 2. Cabeceras de grupo (columna 1 y encabezados pareados) ——— */
+    .coords-table .group-header th {
+      background-color: var(--color-gray);
+      font-weight: var(--fw-bold);
+      text-align: left;
+    }
+
+    /* la fila “MARCO / ÉPOCA” es un grupo de dos pares */
+    .coords-table .group-header th + td,
+    .coords-table .group-header th + td + th + td {
+      background-color: var(--color-gray);
+      font-weight: var(--fw-bold);
+    }
+
+    /* ——— 3. Sub-cabeceras (ECEF, GEODÉSICAS, etc.) ——— */
+    .coords-table .sub-header th {
+      background-color: var(--color-gray-light);
+      font-weight: var(--fw-medium);
+      text-align: center;
+      border-bottom: 2px solid var(--color-gray-dark);
+    }
+
+    /* ——— 4. Zebra-striping sólo en filas de datos (no en headers) ——— */
+    .coords-table tr:not(.group-header):not(.sub-header):nth-child(even) td {
+      background-color: #ffffff;
+    }
+    .coords-table tr:not(.group-header):not(.sub-header):nth-child(odd) td {
+      background-color: var(--color-gray-light);
+    }
+
+    /* ——— 5. Alineación específica por columna ——— */
+    /* Columna 1: etiqueta de grupo/sub-grupo (SISTEMA / ECEF, etc.) */
+    .coords-table td:first-child,
+    .coords-table th:first-child {
+      text-align: left;
+      width: 20%;
+    }
+    /* Columna 2,3,4: datos X/Y/Z o valores */
+    .coords-table td:nth-child(n+2),
+    .coords-table th:nth-child(n+2) {
+      text-align: right;
+      width: 26.66%;
+    }
+
+    /* ——— Sección Coordenadas Simplificada ——— */
+    .coords-simple {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1em;
+    }
+    .coords-simple th,
+    .coords-simple td {
+      border: 1px solid var(--color-gray-dark);
+      padding: 0.6em;
+      vertical-align: top;
+    }
+    .coords-simple th {
+      background-color: var(--color-gray);
+      font-weight: var(--fw-medium);
+      text-align: left;
+      width: 25%;
+    }
+    .coords-simple td {
+      background-color: #fff;
+      text-align: right;
+      line-height: 1.4;
+    }
+    /* Zebra opcional: ayuda al ojo en filas largas */
+    .coords-simple tr:nth-child(even) td {
+      background-color: var(--color-gray-light);
+    }
+    /* Contenedor flex para dos “cards” paralelas */
+    .coords-container {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem; /* separa de la sección siguiente */
+    }
+
+    /* Cada “card” ocupa mitad de ancho */
+    .coords-card {
+      flex: 1;
+    }
+
+    /* Ajusta la tabla simple para ocupar todo el espacio de la card */
+    .coords-card .coords-simple {
+      width: 100%;
+      margin: 0; /* quita márgenes internos si los hubiera */
+    }
+
+
+
+
+
+
   </style>
 </head>
 <body>
@@ -183,9 +487,7 @@
 
     <div class="panel owner">
       <table class="panel-body">
-        <!-- <tr><th>Propietario</th><td>{{ propietario }}</td></tr> -->  <!-- eliminado -->
         <tr><th>Gestor</th>     <td>{{ gestor }}</td></tr>
-        <tr><th>Ciudad</th>     <td>{{ ciudad }}</td></tr>
         <tr><th>Región</th>     <td>{{ region }}</td></tr>
         <tr><th>País</th>       <td>{{ pais }}</td></tr>
       </table>
@@ -202,7 +504,7 @@
           <!-- 2. Archivos -->
           <tr>
             <th>Arch. Obs. RNX3</th>
-            <td><a href="{{ archivos_rnx3 }}">{{ archivos_rnx3 }}</a></td>
+            <td>{{ archivos_rnx3 or "–"}}</td>
           </tr>
           <tr>
             <th>Arch. Obs. RNX2</th>
@@ -234,24 +536,53 @@
     </table>
   </div>
 
-  <h2 class="section-header">Coordenadas</h2>
-  <div class="panel coordinates">
-    <table class="coords-table">
-      <colgroup><col style="width:20%"><col style="width:26.66%"><col style="width:26.66%"><col style="width:26.66%"></colgroup>
-      <tr class="group-header"><th>SISTEMA</th><td class="value" colspan="3">{{ sistema }}</td></tr>
-      <tr class="group-header"><th>MARCO</th><td class="value">{{ marco }}</td><th>ÉPOCA</th><td class="value">{{ epoca }}</td></tr>
-      <tr class="sub-header"><th rowspan="2">ECEF (m)</th><th>X</th><th>Y</th><th>Z</th></tr>
-      <tr><td class="value">{{ ecef_x }}</td><td class="value">{{ ecef_y }}</td><td class="value">{{ ecef_z }}</td></tr>
-      <tr class="sub-header"><th rowspan="2">GEODÉSICAS</th><th>LAT</th><th>LONG</th><th>h</th></tr>
-      <tr><td class="value">{{ lat }}</td><td class="value">{{ lon }}</td><td class="value">{{ h }}</td></tr>
-      <tr class="group-header"><th>ELIPSOIDE</th><td class="value" colspan="3">{{ elipsoide }}</td></tr>
-      <tr class="sub-header"><th rowspan="2">PROYECTADAS</th><th>E</th><th>N</th><th></th></tr>
-      <tr><td class="value">{{ utm_e }}</td><td class="value">{{ utm_n }}</td><td></td></tr>
-      <tr class="group-header"><th>UTM</th><td class="value" colspan="3">{{ zona_utm }}</td></tr>
-      <tr class="sub-header"><th rowspan="2">PRECISIONES</th><th>e</th><th>n</th><th>u</th></tr>
-      <tr><td class="value">{{ prec_e }}</td><td class="value">{{ prec_n }}</td><td class="value">{{ prec_u }}</td></tr>
+<h2 class="section-header">Coordenadas</h2>
+<div class="coords-container">
+  <!-- Card izquierda: ECEF + Geodésicas -->
+  <div class="coords-card">
+    <table class="coords-simple">
+      <tbody>
+        <tr>
+          <th>ECEF (m)</th>
+          <td>
+            X: {{ ecef_x }}<br>
+            Y: {{ ecef_y }}<br>
+            Z: {{ ecef_z }}
+          </td>
+        </tr>
+        <tr>
+          <th>Geodésicas</th>
+          <td>
+            Lat: {{ lat }}<br>
+            Lon: {{ lon }}<br>
+            Altura: {{ h }}
+          </td>
+        </tr>
+      </tbody>
     </table>
   </div>
+
+  <!-- Card derecha: UTM + Precisión -->
+  <div class="coords-card">
+    <table class="coords-simple">
+      <tbody>
+        <tr>
+          <th>UTM</th>
+          <td>
+            Zona: {{ zona_utm }}<br>
+            E: {{ utm_e }}  N: {{ utm_n }}
+          </td>
+        </tr>
+        <tr>
+          <th>Precisión (m)</th>
+          <td>
+            e: {{ prec_e }}  n: {{ prec_n }}  u: {{ prec_u }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
   <div class="footer">Generado: {{ ahora }}</div>
 </body>

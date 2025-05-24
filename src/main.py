@@ -9,6 +9,7 @@ import re, utm
 import sys
 import base64
 import subprocess
+from geopy.geocoders import Nominatim
 
 # — Carga .env —
 load_dotenv()
@@ -34,6 +35,31 @@ def fetch_scalar(sql: str, params: dict):
     with SessionLocal() as session:
         return session.execute(text(sql), params).scalar()
 
+def fetch_station_metadata(db_session, station: str):
+    """
+    Lee de public.stations el registro único para la estación y extrae:
+      - agency      → gestor
+      - download_link → archivos_rnx3
+      - station, country → id_estacion = station + '00' + country
+    """
+    sql = text("""
+        SELECT station, agency, download_link, country
+          FROM public.stations
+         WHERE station = :station
+         LIMIT 1
+    """)
+    row = db_session.execute(sql, {"station": station}).mappings().first()
+    if not row:
+        raise ValueError(f"No existe metadata para estación {station} en public.stations")
+
+    st = row["station"].strip()
+    country = row["country"].strip() if row["country"] else ""
+    return {
+        "gestor":        row["agency"],
+        "archivos_rnx3": row["download_link"],
+        "id_estacion":   f"{st}00{country}",
+    }
+
 def fetch_equipment_from_amsur_info(db_session, station: str, fecha_str: str):
     """
     Para la estación y fecha dadas:
@@ -46,7 +72,7 @@ def fetch_equipment_from_amsur_info(db_session, station: str, fecha_str: str):
 
     # 1) Registro activo en esa fecha
     sql_actual = text("""
-        SELECT id, from_date, receiver_type, antenna_type
+        SELECT id, from_date, receiver_type, antenna_type, u
         FROM amsur_info
         WHERE station = :station
           AND from_date <= :fecha_dt
@@ -61,10 +87,16 @@ def fetch_equipment_from_amsur_info(db_session, station: str, fecha_str: str):
     if not act:
         raise ValueError(f"No hay equipamiento activo para {station} en {fecha_str}")
 
-    rec_act_type = act["receiver_type"].strip()
-    rec_act_date = act["from_date"].date().isoformat()
-    ant_act_type = act["antenna_type"].strip()
-    ant_act_date = rec_act_date  # suelen coincidir
+    from_date_act = act["from_date"]
+    rec_act_type  = act["receiver_type"].strip()
+    rec_act_date  = from_date_act.strftime("%d-%m-%y")
+    ant_act_type  = act["antenna_type"].strip()
+    ant_act_date  = rec_act_date
+
+    # altura (m) ← campo `u` del registro activo
+    altura_raw = act["u"]
+    altura_str = str(altura_raw) if altura_raw is not None else None
+
 
     # 2) Primer cambio anterior de receptor
     sql_prev_rec = text("""
@@ -101,20 +133,22 @@ def fetch_equipment_from_amsur_info(db_session, station: str, fecha_str: str):
         "ant_act_type": ant_act_type
     }).mappings().first()
 
-    ant_prev_type = prev_ant["antenna_type"].strip() if prev_ant else None
-    ant_prev_date = prev_ant["from_date"].date().isoformat() if prev_ant else None
+    if prev_ant:
+        ant_prev_type = prev_ant["antenna_type"].strip()
+        ant_prev_date = prev_ant["from_date"].strftime("%d-%m-%y")
+    else:
+        ant_prev_type = ant_prev_date = None
 
     return {
-        "receiver_actual_date":   rec_act_date,
-        "receiver_actual_type":   rec_act_type,
-        "receiver_previous_date": rec_prev_date,
-        "receiver_previous_type": rec_prev_type,
-        "antenna_actual_date":    ant_act_date,
-        "antenna_actual_type":    ant_act_type,
-        "antenna_previous_date":  ant_prev_date,
-        "antenna_previous_type":  ant_prev_type,
+      "receiver_actual_date":   rec_act_date,
+      "receiver_actual_type":   rec_act_type,
+      "receiver_previous_date": rec_prev_date,
+      "receiver_previous_type": rec_prev_type,
+      "antenna_actual_date":    ant_act_date,
+      "antenna_actual_type":    ant_act_type,
+      "antenna_previous_date":  ant_prev_date,
+      "antenna_previous_type":  ant_prev_type,
     }
-
 
 ELLIPSOID = pm.Ellipsoid(
     semimajor_axis=6378137.0,
@@ -153,6 +187,23 @@ def format_epoca_from_filename(fname: str) -> str:
     frac = "50" if code == "50" else "00"
     return f"{yy}.{frac}"
 
+
+def fetch_admin_divisions(lat_dec: float, lon_dec: float):
+    """
+    Dada una latitud/longitud, devuelve
+    región y país en español.
+    """
+    geolocator = Nominatim(user_agent="ficha_gnss", timeout=10)
+    loc = geolocator.reverse((lat_dec, lon_dec), language="es", addressdetails=True)
+    if not loc or "address" not in loc.raw:
+        return None, None, None
+
+    addr = loc.raw["address"]
+    region = addr.get("state") or addr.get("region")
+    country= addr.get("country")
+    return region, country
+
+
 def fetch_coords_from_validation(db_session, station: str, fecha_str: str):
     """
     - Coge el último registro en validation para station con epoch <= fecha_str + 12:00
@@ -184,6 +235,9 @@ def fetch_coords_from_validation(db_session, station: str, fecha_str: str):
     # 1) calculo geodésico
     lat_dec, lon_dec, h = pm.ecef2geodetic(x, y, z, ell=ELLIPSOID, deg=True)
 
+    # 1.5) Se extrae ciudad/región/país
+    region, pais = fetch_admin_divisions(lat_dec, lon_dec)
+
     # 2) formateo la epoca
     epoca = format_epoca_from_filename(fname) or format_epoca_from_yearmonth(ym)
     
@@ -201,10 +255,30 @@ def fetch_coords_from_validation(db_session, station: str, fecha_str: str):
         "lat":            fmt_lat(lat_dec),
         "lon":            fmt_lon(lon_dec),
         "h":              f"{h:.3f}",
+        "region":         region  or "-",
+        "pais":           pais    or "-",
         "zona_utm":       zona_utm,
         "utm_e":          f"{easting:.3f}",
         "utm_n":          f"{northing:.3f}",
     }
+
+def fetch_service_date_from_amsur_rename(db_session, station: str) -> str:
+    """
+    Lee el primer from_date de amsur_rename para la estación
+    y lo devuelve como 'DD-MM-YY'.
+    """
+    sql = text("""
+        SELECT from_date
+          FROM amsur_rename
+         WHERE station = :station
+         ORDER BY from_date ASC
+         LIMIT 1
+    """)
+    row = db_session.execute(sql, {"station": station}).mappings().first()
+    if not row or not row["from_date"]:
+        raise ValueError(f"No hay fecha de servicio para {station} en amsur_rename")
+    # extraer solo la fecha y formatear
+    return row["from_date"].strftime("%d-%m-%y")
 
 def fetch_sum_metadata(db_session, station: str, fecha_str: str):
     """
@@ -239,32 +313,14 @@ def fetch_sum_metadata(db_session, station: str, fecha_str: str):
         "prec_u":      f"{row['u']:.4f}",
     }
 
-# ——— Campos fijos ———
+# Campos Fijos
+
 FIXED_FIELDS = {
     # Sección Información
-    "id_estacion": "USCL00CHL",
-    "fecha_servicio": "2023-01-15",
-    "altura": "0.0343",
-    "referencia": "ARP",
+    "referencia": "ARP", # Fijo
     "clasificacion": "S K P R",
-    "rnx2": None,
-    "intervalo_grabacion": "30S",
-    "sesion": "diario",
-    "constelaciones": "GPS+GLO+GAL+BDS+SBAS",
-    "logfile": "https://geodesychile.usach.cl/infraestructura-geodesica/usach-rinex-gnss",
-    "archivos_rnx3": "https://geodesychile.usach.cl/infraestructura-geodesica/usach-rinex-gnss",
-    "archivos_rnx2": None,
-    "archivos_navegacion": None,
-    "red_nacional": None,
-    "red_continental": "SIRGASCON",
-    "red_global": "IGS",
-    "propietario": "USACH",
-    "gestor": "USACH",
-    "ciudad": "Santiago",
-    "region": "Metropolitana",
-    "pais": "Chile",
 
-    # Sección Coordenadas (se completarán luego)
+    # Sección Coordenadas 
     "sistema":   "SIRGASCON",
     "marco":     "ADELA (https://doi.org/10.1515/jogs-2022-0173)",
     "elipsoide": "GRS80",
@@ -283,6 +339,7 @@ def build_context(station: str, fecha: str) -> dict:
     """
     Arma el contexto para la plantilla:
       - Datos fijos
+      - Metadatos desde public.stations
       - Coordenadas + UTM + epoca
       - Precisiones + domo
       - Equipamiento
@@ -291,9 +348,11 @@ def build_context(station: str, fecha: str) -> dict:
     """
     # 1) consulta a la BDD
     with SessionLocal() as db:
+        meta    = fetch_station_metadata(db, station)
         coords = fetch_coords_from_validation(db, station, fecha)
         summ   = fetch_sum_metadata(db, station, fecha)
         equip  = fetch_equipment_from_amsur_info(db, station, fecha)
+        fecha_servicio = fetch_service_date_from_amsur_rename(db, station)
 
     # 2) incrustar logos
     logo_usach = inline_img("static/usach_logo.png")
@@ -301,17 +360,23 @@ def build_context(station: str, fecha: str) -> dict:
 
     # 3) combinar todo el contexto
     context = {
+
+        **meta,
+        "fecha_servicio": fecha_servicio,
         **FIXED_FIELDS,
         **coords,
         **summ,
         **equip,
+
         # imágenes embebidas
         "logo_usach": logo_usach,
         "logo_cpag":  logo_cpag,
+
         # parámetros de consulta
         "estacion":      station,
         "fecha_consulta": fecha,
     }
+
     return context
 
 
@@ -344,7 +409,7 @@ def main():
     try:
         subprocess.run([
             "wkhtmltopdf",
-            "--enable-local-file-access",  # necesario si lees ficheros locales
+            "--enable-local-file-access",  # necesario si se leen ficheros locales
             html_path,
             pdf_path
         ], check=True)

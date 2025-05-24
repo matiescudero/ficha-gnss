@@ -4,3 +4,5 @@ Jinja2
 pymap3d
 utm
 python-dotenv
+geopy>=2.3.0
+
